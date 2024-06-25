@@ -15,7 +15,7 @@ export class Url {
   @Prop({ type: mongoose.Schema.Types.Mixed })
   public encryptedData: Record<string, string>;
 
-  @Prop({ type: 'number' })
+  @Prop({ type: 'number', default: 0 })
   public visits: number;
 
   @Prop({ type: 'string' })

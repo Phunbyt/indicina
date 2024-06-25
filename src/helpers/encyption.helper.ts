@@ -1,10 +1,10 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 
 export const generateDataEncryptionKey = () => {
   return crypto.randomBytes(32); // Convert the DEK to a hexadecimal string
 };
 
-export const encryptDataEncryptionKey = (dek: string, masterKey: string) => {
+export const encryptDataEncryptionKey = (dek: Buffer, masterKey: string) => {
   try {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', dek, iv);

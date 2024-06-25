@@ -18,6 +18,10 @@ export class AppConfigService {
     return this.configService.get<number>('app.port');
   }
 
+  public get baseUrl(): string {
+    return this.configService.get<string>('app.baseUrl');
+  }
+
   public get dbUri(): string {
     return this.configService.get<string>('app.dbUri');
   }
