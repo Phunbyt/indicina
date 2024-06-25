@@ -20,16 +20,12 @@ export class UrlService {
     private readonly urlModel: Model<Url>,
   ) {}
   async encode(encodeUrlDto: EncodeUrlDto) {
-    const masterKey = this.appConfigService.encryptionMasterKey;
-    const baseUrl = this.appConfigService.baseUrl;
+    const { baseUrl, encryptionMasterKey: masterKey } = this.appConfigService;
+
     const dek = generateDataEncryptionKey();
-
     const encryptedDek = encryptDataEncryptionKey(dek, masterKey);
-
     const urlId = generateRandomString(6);
-
     const jsonData = JSON.stringify(encodeUrlDto);
-
     const encryptedData = encryptData(jsonData, encryptedDek.iv);
 
     await this.urlModel.create({
@@ -40,41 +36,22 @@ export class UrlService {
     });
 
     return {
-      message: 'Url successfully shortend',
+      message: 'Url successfully shortened',
       url: `${baseUrl}/${urlId}`,
     };
   }
 
   async decode(decodeUrlDto: DecodeUrlDto) {
     const { url } = decodeUrlDto;
-    const lastSixStrings = url.slice(-6);
+    const urlId = url.slice(-6);
 
-    const existingUrl = await this.urlModel.findOne({
-      urlId: lastSixStrings,
+    const existingUrl = await this.findUrlByUrlId(urlId);
+
+    const decryptedUrl = await this.decryptUrlData(existingUrl);
+
+    await this.updateUrl(urlId, {
+      $set: { decryptCount: existingUrl.decryptCount + 1 },
     });
-
-    if (!existingUrl) {
-      throw new BadRequestException('Invalid url provided');
-    }
-
-    const decryptedData = decryptData(
-      existingUrl.encryptedData.encryptedData,
-      existingUrl.encryptedDekIV,
-      existingUrl.encryptedData.iv,
-    );
-
-    const decryptedUrl = JSON.parse(decryptedData);
-
-    await this.urlModel.updateOne(
-      {
-        urlId: lastSixStrings,
-      },
-      {
-        $set: {
-          decryptCount: (existingUrl.decryptCount += 1),
-        },
-      },
-    );
 
     return {
       message: 'Url successfully decrypted',
@@ -82,54 +59,56 @@ export class UrlService {
     };
   }
 
-  async record(url_path: string, res) {
-    const url = url_path;
-    const lastSixStrings = url.slice(-6);
+  async record(url_path: string, res: any) {
+    const urlId = url_path.slice(-6);
 
-    const existingUrl = await this.urlModel.findOne({
-      urlId: lastSixStrings,
+    const existingUrl = await this.findUrlByUrlId(urlId);
+
+    const decryptedUrl = await this.decryptUrlData(existingUrl);
+
+    await this.updateUrl(urlId, {
+      $set: {
+        visits: existingUrl.visits + 1,
+        lastVisit: new Date(),
+      },
     });
-
-    if (!existingUrl) {
-      throw new BadRequestException('Invalid url provided');
-    }
-
-    const decryptedData = decryptData(
-      existingUrl.encryptedData.encryptedData,
-      existingUrl.encryptedDekIV,
-      existingUrl.encryptedData.iv,
-    );
-
-    const decryptedUrl = JSON.parse(decryptedData);
-
-    await this.urlModel.updateOne(
-      {
-        urlId: lastSixStrings,
-      },
-      {
-        $set: {
-          visits: (existingUrl.visits += 1),
-          lastVisit: new Date(),
-        },
-      },
-    );
 
     return res.redirect(decryptedUrl.url);
   }
 
   async stats(url_path: string) {
-    const url = url_path;
-    const lastSixStrings = url.slice(-6);
+    const urlId = url_path.slice(-6);
 
-    const existingUrl = await this.urlModel
-      .findOne({
-        urlId: lastSixStrings,
-      })
-      .select(['urlId', 'visits', 'decryptCount', 'lastVisit']);
+    const existingUrl = await this.findUrlByUrlId(urlId);
 
     if (!existingUrl) {
       throw new BadRequestException('Invalid url provided');
     }
-    return existingUrl;
+
+    const { urlId: id, visits, decryptCount, lastVisit } = existingUrl;
+
+    return { id, visits, decryptCount, lastVisit };
+  }
+
+  private async findUrlByUrlId(urlId: string): Promise<Url | null> {
+    const data = this.urlModel.findOne({ urlId });
+
+    if (!data) {
+      throw new BadRequestException('Invalid url provided');
+    }
+    return data;
+  }
+
+  private async decryptUrlData(urlData: Url): Promise<any> {
+    const decryptedData = decryptData(
+      urlData.encryptedData.encryptedData,
+      urlData.encryptedDekIV,
+      urlData.encryptedData.iv,
+    );
+    return JSON.parse(decryptedData);
+  }
+
+  private async updateUrl(urlId: string, update: any): Promise<void> {
+    await this.urlModel.updateOne({ urlId }, update).exec();
   }
 }
