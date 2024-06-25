@@ -36,3 +36,20 @@ export const encryptData = (data: string, dek: string) => {
     throw error;
   }
 };
+
+export const decryptData = (encryptedData: string, dek: string, iv: string) => {
+  try {
+    const decipher = crypto.createDecipheriv(
+      'aes-256-cbc',
+      Buffer.from(dek),
+      Buffer.from(iv, 'hex'),
+    );
+
+    let decryptedData = decipher.update(encryptedData, 'hex', 'utf8');
+    decryptedData += decipher.final('utf8');
+    return decryptedData;
+  } catch (error) {
+    console.error('Decryption error decryptData:', error);
+    throw error;
+  }
+};
