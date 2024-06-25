@@ -117,7 +117,19 @@ export class UrlService {
     return res.redirect(decryptedUrl.url);
   }
 
-  stats(id: string) {
-    return `This action returns a #${id} url`;
+  async stats(url_path: string) {
+    const url = url_path;
+    const lastSixStrings = url.slice(-6);
+
+    const existingUrl = await this.urlModel
+      .findOne({
+        urlId: lastSixStrings,
+      })
+      .select(['urlId', 'visits', 'decryptCount', 'lastVisit']);
+
+    if (!existingUrl) {
+      throw new BadRequestException('Invalid url provided');
+    }
+    return existingUrl;
   }
 }
