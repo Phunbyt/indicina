@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { UrlService } from './url.service';
-import { EncodeUrlDto } from './dto/encode-url.dto';
+import { DecodeUrlDto, EncodeUrlDto } from './dto/encode-url.dto';
 
 @Controller()
 export class UrlController {
@@ -11,9 +11,9 @@ export class UrlController {
     return this.urlService.encode(encodeUrlDto);
   }
 
-  @Get('decode')
-  decode() {
-    return this.urlService.decode();
+  @Post('decode')
+  decode(@Body() decodeUrlDto: DecodeUrlDto) {
+    return this.urlService.decode(decodeUrlDto);
   }
 
   @Get(':url_path')

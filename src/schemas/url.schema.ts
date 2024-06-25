@@ -18,6 +18,9 @@ export class Url {
   @Prop({ type: 'number', default: 0 })
   public visits: number;
 
+  @Prop({ type: 'number', default: 0 })
+  public decryptCount: number;
+
   @Prop({ type: 'string' })
   public lastVisit: string;
 }

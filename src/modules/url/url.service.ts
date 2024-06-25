@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { EncodeUrlDto } from './dto/encode-url.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { DecodeUrlDto, EncodeUrlDto } from './dto/encode-url.dto';
 import { AppConfigService } from 'src/common/config/app-config.service';
 import {
+  decryptData,
   encryptData,
   encryptDataEncryptionKey,
   generateDataEncryptionKey,
@@ -40,12 +41,45 @@ export class UrlService {
 
     return {
       message: 'Url successfully shortend',
-      link: `${baseUrl}/${urlId}`,
+      url: `${baseUrl}/${urlId}`,
     };
   }
 
-  decode() {
-    return `This action returns all url`;
+  async decode(decodeUrlDto: DecodeUrlDto) {
+    const { url } = decodeUrlDto;
+    const lastSixStrings = url.slice(-6);
+
+    const existingUrl = await this.urlModel.findOne({
+      urlId: lastSixStrings,
+    });
+
+    if (!existingUrl) {
+      throw new BadRequestException('Invalid url provided');
+    }
+
+    const decryptedData = decryptData(
+      existingUrl.encryptedData.encryptedData,
+      existingUrl.encryptedDekIV,
+      existingUrl.encryptedData.iv,
+    );
+
+    const decryptedUrl = JSON.parse(decryptedData);
+
+    await this.urlModel.updateOne(
+      {
+        urlId: lastSixStrings,
+      },
+      {
+        $set: {
+          decryptCount: (existingUrl.decryptCount += 1),
+        },
+      },
+    );
+
+    return {
+      message: 'Url successfully decrypted',
+      url: decryptedUrl.url,
+    };
   }
 
   record(id: string) {

@@ -5,3 +5,8 @@ export class EncodeUrlDto {
   @IsUrl({}, { message: 'url must be  valid' })
   public url: string;
 }
+
+export class DecodeUrlDto {
+  @IsNotEmpty({ message: 'url can not be empty' })
+  public url: string;
+}
