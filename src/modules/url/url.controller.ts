@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Res } from '@nestjs/common';
 import { UrlService } from './url.service';
 import { DecodeUrlDto, EncodeUrlDto } from './dto/encode-url.dto';
 
@@ -17,8 +17,8 @@ export class UrlController {
   }
 
   @Get(':url_path')
-  record(@Param('url_path') url_path: string) {
-    return this.urlService.record(url_path);
+  record(@Param('url_path') url_path: string, @Res() res: Response) {
+    return this.urlService.record(url_path, res);
   }
 
   @Get('statistic/:url_path')

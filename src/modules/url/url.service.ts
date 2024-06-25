@@ -82,8 +82,39 @@ export class UrlService {
     };
   }
 
-  record(id: string) {
-    return `This action returns a #${id} url`;
+  async record(url_path: string, res) {
+    const url = url_path;
+    const lastSixStrings = url.slice(-6);
+
+    const existingUrl = await this.urlModel.findOne({
+      urlId: lastSixStrings,
+    });
+
+    if (!existingUrl) {
+      throw new BadRequestException('Invalid url provided');
+    }
+
+    const decryptedData = decryptData(
+      existingUrl.encryptedData.encryptedData,
+      existingUrl.encryptedDekIV,
+      existingUrl.encryptedData.iv,
+    );
+
+    const decryptedUrl = JSON.parse(decryptedData);
+
+    await this.urlModel.updateOne(
+      {
+        urlId: lastSixStrings,
+      },
+      {
+        $set: {
+          visits: (existingUrl.visits += 1),
+          lastVisit: new Date(),
+        },
+      },
+    );
+
+    return res.redirect(decryptedUrl.url);
   }
 
   stats(id: string) {
