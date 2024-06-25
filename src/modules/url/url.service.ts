@@ -1,16 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DecodeUrlDto, EncodeUrlDto } from './dto/encode-url.dto';
-import { AppConfigService } from 'src/common/config/app-config.service';
+import { AppConfigService } from '../../common/config/app-config.service';
 import {
   decryptData,
   encryptData,
   encryptDataEncryptionKey,
   generateDataEncryptionKey,
-} from 'src/helpers/encyption.helper';
-import { generateRandomString } from 'src/helpers/url-id.helper';
+} from '../../helpers/encyption.helper';
+import { generateRandomString } from '../../helpers/url-id.helper';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Url } from 'src/schemas/url.schema';
+import { Url } from '../../schemas/url.schema';
 
 @Injectable()
 export class UrlService {

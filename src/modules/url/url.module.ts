@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { UrlService } from './url.service';
 import { UrlController } from './url.controller';
-import { AppConfigModule } from 'src/common/config/app-config.module';
+import { AppConfigModule } from '../../common/config/app-config.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Url, UrlSchema } from 'src/schemas/url.schema';
+import { Url, UrlSchema } from '../../schemas/url.schema';
 
 @Module({
   controllers: [UrlController],
