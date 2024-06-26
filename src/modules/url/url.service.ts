@@ -42,8 +42,15 @@ export class UrlService {
   }
 
   async decode(decodeUrlDto: DecodeUrlDto) {
+    const { baseUrl } = this.appConfigService;
+
     const { url } = decodeUrlDto;
     const urlId = url.slice(-6);
+    const urlDomain = url.slice(0, -7);
+
+    if (baseUrl !== urlDomain) {
+      throw new BadRequestException(`Invalid url provided`);
+    }
 
     const existingUrl = await this.findUrlByUrlId(urlId);
 
@@ -90,7 +97,7 @@ export class UrlService {
     return { id, visits, decryptCount, lastVisit };
   }
 
-  private async findUrlByUrlId(urlId: string): Promise<Url | null> {
+  public async findUrlByUrlId(urlId: string): Promise<Url | null> {
     const data = this.urlModel.findOne({ urlId });
 
     if (!data) {
@@ -99,7 +106,7 @@ export class UrlService {
     return data;
   }
 
-  private async decryptUrlData(urlData: Url): Promise<any> {
+  public async decryptUrlData(urlData: Url): Promise<any> {
     const decryptedData = decryptData(
       urlData.encryptedData.encryptedData,
       urlData.encryptedDekIV,
@@ -108,7 +115,7 @@ export class UrlService {
     return JSON.parse(decryptedData);
   }
 
-  private async updateUrl(urlId: string, update: any): Promise<void> {
+  public async updateUrl(urlId: string, update: any): Promise<void> {
     await this.urlModel.updateOne({ urlId }, update).exec();
   }
 }
